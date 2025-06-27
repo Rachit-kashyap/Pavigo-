@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Socket.IO Vibe Matcher</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body>
+  <h2>Socket.IO Vibe Matcher</h2>
+  <h2>Your Vibe Score is <%=user.vibeScore%></h2>
+  <input type="number" id="vibeScore" placeholder="Enter your vibeScore">
+  <button id="updateVibeScoreBtn">Update VibeScore</button>
+
+  <h3>Matched Users:</h3>
+  <ul id="matchedUsersList">
+    <!-- Users will be dynamically listed here -->
+  </ul>
+
+  <script>
+    const socket = io(); // assumes same origin (localhost:8080)
+
+    socket.on("connect", () => {
+      console.log("Connected with ID:", socket.id);
+
+      // Notify backend on connection
+      socket.emit("userConnected");
+
+      // When button is clicked, send vibeScore
+      document.getElementById("updateVibeScoreBtn").addEventListener("click", () => {
+        let vibeScore = document.getElementById("vibeScore").value;
+        if (!vibeScore) return alert("Please enter a vibeScore");
+        socket.emit("vibeScore", { vibeScore });
+      });
+
+      // Receive matched users from server
+      socket.on("reciveVibeScoreUserRange", ({ users }) => {
+        console.log("Matched users:", users);
+
+        const userList = document.getElementById("matchedUsersList");
+        userList.innerHTML = ""; // Clear previous list
+
+        if (!users || users.length === 0) {
+          const li = document.createElement("li");
+          li.textContent = "No matching users found.";
+          userList.appendChild(li);
+          return;
+        }
+
+        users.forEach((user) => {
+          const li = document.createElement("li");
+          li.textContent = `🧑‍💻 ${user.name} (ID: ${user._id}) `;
+
+          const btn = document.createElement("button");
+          btn.textContent = "connect";
+          btn.addEventListener("click", () => {
+            console.log(`Connect button clicked for ${user.name} (${user._id})`);
+            // You can emit another socket event here like:
+            socket.emit("connectRequest", { toUserId: user._id });
+          });
+
+          li.appendChild(btn);
+          userList.appendChild(li);
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

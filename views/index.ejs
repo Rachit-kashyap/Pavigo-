@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Vibe Matcher</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+  <h2>Hi, <%= user.name %></h2>
+  <h3>Your Vibe Score: <span id="currentVibeScore"><%= user.vibeScore %></span></h3>
+
+  <input type="number" id="vibeScore" placeholder="Enter new vibe score">
+  <button id="updateVibeScoreBtn">Update</button>
+
+  <h3>Matched Users:</h3>
+  <ul id="matchedUsersList"></ul>
+
+  <h3>Connection Requests:</h3>
+  <ul id="connectionRequestsList"></ul>
+
+  <script>
+    const myUserId = "<%= user._id %>";
+    const myFriends = <%- JSON.stringify(user.yourVibeScoreFriends || []) %>;
+    const socket = io();
+
+    socket.on("connect", () => {
+      socket.emit("userConnected", { userId: myUserId });
+
+      document.getElementById("updateVibeScoreBtn").addEventListener("click", () => {
+        const vibeScore = parseInt(document.getElementById("vibeScore").value);
+        if (isNaN(vibeScore)) return alert("Enter a valid vibe score");
+        socket.emit("vibeScore", { userId: myUserId, vibeScore });
+      });
+    });
+
+    socket.on("youVibeScore", ({ vibeScore }) => {
+      document.getElementById("currentVibeScore").innerText = vibeScore;
+    });
+
+    socket.on("receiveVibeScoreUserRange", ({ users }) => {
+      const list = document.getElementById("matchedUsersList");
+      list.innerHTML = "";
+      if (!users || users.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "No matches found.";
+        return list.appendChild(li);
+      }
+
+      users.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = `${user.name} (ID: ${user._id})`;
+
+        const isFriend = myFriends.includes(user._id);
+        if (!isFriend) {
+          const connectBtn = document.createElement("button");
+          connectBtn.textContent = "Connect";
+          connectBtn.onclick = () => socket.emit("connectRequest", {
+            myUserId: myUserId,
+            friendUserId: user._id
+          });
+          li.appendChild(connectBtn);
+        } else {
+          const status = document.createElement("span");
+          status.textContent = " ✅ Connected ";
+          const removeBtn = document.createElement("button");
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = () => socket.emit("removeFriend", {
+            fromUserId: myUserId,
+            toUserId: user._id
+          });
+          li.appendChild(status);
+          li.appendChild(removeBtn);
+        }
+
+        list.appendChild(li);
+      });
+    });
+
+    socket.on("newRequestReceived", ({ from }) => {
+      const list = document.getElementById("connectionRequestsList");
+      const li = document.createElement("li");
+      li.textContent = `📥 From ${from.name} (${from._id})`;
+
+      const approve = document.createElement("button");
+      approve.textContent = "Approve ✅";
+      approve.onclick = () => {
+        socket.emit("connectionApproved", { fromUserId: from._id, toUserId: myUserId });
+        li.remove();
+      };
+
+      const reject = document.createElement("button");
+      reject.textContent = "Reject ❌";
+      reject.onclick = () => {
+        socket.emit("connectionRejected", { fromUserId: from._id, toUserId: myUserId });
+        li.remove();
+      };
+
+      li.appendChild(approve);
+      li.appendChild(reject);
+      list.appendChild(li);
+    });
+
+    socket.on("requestRejected", ({ name }) => {
+      alert(`❌ Your request was rejected by ${name}`);
+    });
+
+    socket.on("requestApproved", ({ by }) => {
+      alert(`✅ Your request was accepted by ${by}`);
+    });
+
+    socket.on("friendRemoved", ({ friendId }) => {
+      console.log("Friend removed:", friendId);
+    });
+  </script>
+</body>
+</html>
