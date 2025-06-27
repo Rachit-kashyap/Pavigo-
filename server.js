@@ -11,6 +11,10 @@ const path = require('path');
 const socketHandlers = require('./sockets/socketHandlers');
 const app = express();
 const server = http.createServer(app);
+const cors = require("cors");
+
+// for temproary it allow all ports to acces this server
+app.use(cors());
 
 const io = new Server(server, {
     cors: {
