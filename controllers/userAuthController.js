@@ -62,14 +62,6 @@ sendVerificationLink(newUser.email,token);
 
 
 
-// res.cookie("token", token, {
-//   httpOnly: true,
-//   secure: process.env.NODE_ENV === "production",
-//   sameSite: "Strict",
-//   maxAge: 10 * 24 * 60 * 60 * 1000 // 10 days
-// });
-
-
 
 
 
@@ -77,7 +69,6 @@ sendVerificationLink(newUser.email,token);
         res.status(201).json({
             success: true,
             message: "User registered successfully. Verify Your account",
-            token
         });
     } catch (error) {
         console.error("Register error:", error.message);
@@ -196,7 +187,7 @@ const generateNewVerificationLink = async (req, res) => {
 
         //  Generate new verification token
         const token = jwt.sign(
-            { id: user._id },
+            { _id: user._id },
             process.env.JWT_SECRET_KEY,
             { expiresIn: "2m" } // Adjust time as needed
         );
@@ -266,12 +257,7 @@ const login = async (req, res) => {
             { expiresIn: "10d" }
         );
 
-        // res.cookie("token", token, {
-        //     httpOnly: true,
-        //     secure: process.env.NODE_ENV === "production",
-        //     sameSite: "Strict",
-        //     maxAge: 10 * 24 * 60 * 60 * 1000
-        // });
+   
 
         return res.status(200).json({
             success: true,

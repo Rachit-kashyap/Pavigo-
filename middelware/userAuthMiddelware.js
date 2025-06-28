@@ -15,7 +15,7 @@ async function userAuthMiddleware(req, res, next) {
         const user = await User.findById(decoded._id);
         if (!user) return res.status(400).json({ message: 'User Not found' });
 
-        req.user = decoded; // you can also use `req.user = user` if needed
+        req.user = decoded; 
         next();
     } catch (err) {
         console.log("auth middleware error:", err.message);

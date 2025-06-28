@@ -6,7 +6,6 @@ const { Server } = require("socket.io");
 const DataBaseConnectionSetup = require("./Utils/DatabaseConnection");
 const userAuthRoutes = require("./routes/userAuthRoutes");
 const userAuthorizedRoutes = require("./routes/userAuthorizedRoutes");
-// const cookie_parser = require("cookie-parser");
 const path = require('path');
 const socketHandlers = require('./sockets/socketHandlers');
 const app = express();
@@ -30,11 +29,9 @@ socketHandlers(io);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(cookie_parser());
-// app.set('view engine', 'ejs');
-// app.set('views', path.join(__dirname, 'views'));
+
 app.use("/api/auth", userAuthRoutes);
-// app.use("/api/u", userAuthorizedRoutes);
+app.use("/api/u", userAuthorizedRoutes);
 
 DataBaseConnectionSetup()
     .then(() => {
@@ -46,5 +43,3 @@ DataBaseConnectionSetup()
         console.error("Database connection failed:", err.message);
     });
 
-// No need to export io now
-// io global place karna ai
